@@ -1,0 +1,200 @@
+﻿@model IEnumerable<Student>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Students</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h2, h3 {
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            margin: 5px 0;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        form {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        form input[type="text"], form button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 14px;
+        }
+
+        form input[type="text"] {
+            width: calc(100% - 22px);
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h2>Students</h2>
+    <button id="loadStudents">Load Students</button>
+    <table id="studentsTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Department</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h3>Create Student</h3>
+    <form id="createForm">
+        <input type="text" id="createName" placeholder="Name" required />
+        <input type="text" id="createPosition" placeholder="Position" required />
+        <input type="text" id="createDepartment" placeholder="Department" required />
+        <button type="submit">Create</button>
+    </form>
+
+    <h3>Update Student</h3>
+    <form id="updateForm">
+        <input type="hidden" id="updateId" />
+        <input type="text" id="updateName" placeholder="Name" required />
+        <input type="text" id="updatePosition" placeholder="Position" required />
+        <input type="text" id="updateDepartment" placeholder="Department" required />
+        <button type="submit">Update</button>
+    </form>
+
+    <script>
+        $(document).ready(function () {
+            $('#loadStudents').click(function () {
+                $.ajax({
+                    url: '@Url.Action("GetList", "Students")',
+                    type: 'GET',
+                    success: function (data) {
+                        var rows = '';
+                        $.each(data, function (i, student) {
+                            rows += '<tr>';
+                            rows += '<td>' + student.name + '</td>';
+                            rows += '<td>' + student.position + '</td>';
+                            rows += '<td>' + student.department + '</td>';
+                            rows += '<td><button class="editButton" data-id="' + student.id + '">Edit</button>';
+                            rows += '<button class="deleteButton" data-id="' + student.id + '">Delete</button></td>';
+                            rows += '</tr>';
+                        });
+                        $('#studentsTable tbody').html(rows);
+                    }
+                });
+            });
+
+            $('#createForm').submit(function (event) {
+                event.preventDefault();
+                var student = {
+                    name: $('#createName').val(),
+                    position: $('#createPosition').val(),
+                    department: $('#createDepartment').val()
+                };
+                $.ajax({
+                    url: '@Url.Action("Create", "Students")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(student),
+                    success: function (data) {
+                        if (data.success) {
+                            alert('Student created successfully');
+                            $('#loadStudents').click();
+                        } else {
+                            alert('Failed to create student');
+                        }
+                    }
+                });
+            });
+
+            $(document).on('click', '.editButton', function () {
+                var id = $(this).data('id');
+                $.ajax({
+                    url: '@Url.Action("Update", "Students")/' + id,
+                    type: 'GET',
+                    success: function (data) {
+                        $('#updateId').val(data.id);
+                        $('#updateName').val(data.name);
+                        $('#updatePosition').val(data.position);
+                        $('#updateDepartment').val(data.department);
+                    }
+                });
+            });
+
+            $('#updateForm').submit(function (event) {
+                event.preventDefault();
+                var student = {
+                    id: $('#updateId').val(),
+                    name: $('#updateName').val(),
+                    position: $('#updatePosition').val(),
+                    department: $('#updateDepartment').val()
+                };
+                $.ajax({
+                    url: '@Url.Action("Update", "Students")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(student),
+                    success: function (data) {
+                        if (data.success) {
+                            alert('Student updated successfully');
+                            $('#loadStudents').click();
+                        } else {
+                            alert('Failed to update student');
+                        }
+                    }
+                });
+            });
+
+            $(document).on('click', '.deleteButton', function () {
+                var id = $(this).data('id');
+                $.ajax({
+                    url: '@Url.Action("Delete", "Students")/' + id,
+                    type: 'POST',
+                    success: function (data) {
+                        if (data.success) {
+                            alert('Student deleted successfully');
+                            $('#loadStudents').click();
+                        } else {
+                            alert('Failed to delete student');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
